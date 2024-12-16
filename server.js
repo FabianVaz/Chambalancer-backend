@@ -1,23 +1,22 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const path = require("path"); // Módulo para manejar rutas
 const connectDB = require("./config/db");
-const { MercadoPagoConfig } = require("mercadopago");
 
+// Configuración de variables de entorno
+dotenv.config();
 
 // Importar rutas
-const paymentRoutes = require("./routes/paymentRoutes");
+const stripeRoutes = require("./routes/stripeRoutes");
 const authRoutes = require("./routes/authRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-const reviewRoutes = require('./routes/reviewRoutes');
-const path = require("path"); // Importa el módulo path
-const adminRoutes = require('./routes/adminRoutes');
+const reviewRoutes = require("./routes/reviewRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const webhookRoutes = require("./routes/webhookRoutes");
 
-
-// Configuración de variables de entorno
-dotenv.config();
 
 // Conexión a la base de datos
 connectDB();
@@ -25,24 +24,24 @@ connectDB();
 // Inicialización de la aplicación
 const app = express();
 
+app.use("/api/webhook", webhookRoutes);
+;
+
 // Middlewares
-app.use(cors()); // Habilita CORS para permitir solicitudes desde otros orígenes
-app.use(express.json()); // Middleware para procesar JSON
-app.use(express.urlencoded({ extended: true })); // Middleware para datos codificados en formularios
-
-// Configuración de Mercado Pago
-
-new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN });
+app.use(cors()); // Habilita CORS para solicitudes desde otros dominios
+app.use(express.json()); // Middleware para manejar JSON
+app.use(express.urlencoded({ extended: true })); // Middleware para manejar formularios codificados
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Servir archivos estáticos
 
 // Rutas de la API
 app.use("/api/auth", authRoutes); // Rutas de autenticación
 app.use("/api/services", serviceRoutes); // Rutas de servicios
 app.use("/api/requests", requestRoutes); // Rutas de solicitudes
 app.use("/api/notifications", notificationRoutes); // Rutas de notificaciones
-app.use("/api/payments", paymentRoutes); // Rutas de pagos
-app.use('/api/reviews', reviewRoutes);
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use('/api/admin', adminRoutes);
+app.use("/api/reviews", reviewRoutes); // Rutas de reseñas
+app.use("/api/admin", adminRoutes); // Rutas de administrador
+app.use("/api/stripe", stripeRoutes); // Rutas de Stripe
+
 
 
 // Ruta principal de prueba
